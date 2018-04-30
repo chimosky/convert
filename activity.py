@@ -25,9 +25,11 @@ from gi.repository import Pango
 from gi.repository import Gdk
 
 from sugar3.activity import activity
+from sugar3.activity.widgets import EditToolbar
 from sugar3.activity.widgets import StopButton
 from sugar3.activity.widgets import ActivityToolbarButton
 from sugar3.graphics.toolbarbox import ToolbarBox
+from sugar3.graphics.toolbarbox import ToolbarButton
 from sugar3.graphics.radiotoolbutton import RadioToolButton
 
 from gettext import gettext as _
@@ -71,8 +73,8 @@ class ConvertActivity(activity.Activity):
         self.spin.set_numeric(True)
 
         self.label = Gtk.Label()
-        self.label.set_selectable(True)
         self.label._size = 12
+        self.label.set_selectable(True)
         self.label.connect('draw', self.resize_label)
 
         self.convert_btn = Gtk.Button(_('Convert'))
@@ -104,6 +106,23 @@ class ConvertActivity(activity.Activity):
         separator.set_expand(False)
         separator.set_draw(True)
         toolbarbox.toolbar.insert(separator, -1)
+
+        self._edit_toolbar = EditToolbar()
+        self._edit_toolbar.undo.props.visible = False
+        self._edit_toolbar.redo.props.visible = False
+        self._edit_toolbar.separator.props.visible = False
+        self._edit_toolbar.copy.set_sensitive = False
+        self._edit_toolbar.copy.connect('clicked', self._edit_copy_cb)
+
+        edit_toolbar_button = ToolbarButton(
+                                          page=self._edit_toolbar,
+                                          icon_name='toolbar-edit'
+                                          )
+        edit_toolbar_button.props.label = _('Edit')
+        
+        self._edit_toolbar.show()
+        edit_toolbar_button.show()
+        toolbarbox.toolbar.insert(edit_toolbar_button, -1)     
 
         # RadioToolButton
         self._length_btn = RadioToolButton()
@@ -181,6 +200,9 @@ class ConvertActivity(activity.Activity):
         self._update_combo(convert.length)
         self.show_all()
 
+    def _edit_copy_cb(self, button):
+        self.label.get_text()
+
     def _update_label(self):
         try:
             spin_value = str(self.spin.get_value())
@@ -254,3 +276,4 @@ class ConvertActivity(activity.Activity):
         unit = self._get_active_text(self.combo1)
         to_unit = self._get_active_text(self.combo2)
         return convert.convert(number, unit, to_unit, self.dic)
+    
